@@ -2,11 +2,12 @@
 A simple utility to convert a curl request to tsung's xml request. Useful for
 quickly generating tsung's xml conf rather than typing xml yourself.
 
-Firefox[^1] and Chrome[^2] support copying an http request as curl command from
-the web developer tools. You can use that feature to copy a request as curl and
-then replace curl with curl2tsung script. It currently supports only the most
-common curl options I encountered while dealing curl commands generated with
-firefox and chrome developer tools.
+[Firefox](https://developer.mozilla.org/en-US/docs/Tools/Network_Monitor#Copy_as_cURL) and
+[Chrome](https://developers.google.com/web/tools/chrome-devtools/network-performance/resource-loading#curl) support
+copying an http request as curl command from the web developer tools. You can
+use that feature to copy a request as curl and then replace curl with curl2tsung
+script. It currently supports only the most common curl options I encountered
+while dealing curl commands generated with firefox and chrome developer tools.
 
 ## Usage
 
@@ -30,8 +31,3 @@ Replacing curl with curl2tsung utility generates following output:
   </http>
 </request>
 ```
-
-
-## References
-[^1]: https://developer.mozilla.org/en-US/docs/Tools/Network_Monitor#Copy_as_cURL
-[^2]: https://developers.google.com/web/tools/chrome-devtools/network-performance/resource-loading#curl
