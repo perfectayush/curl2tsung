@@ -1,0 +1,105 @@
+#!/usr/bin/python
+# Author: Ayush Goyal
+
+import argparse
+from xml.etree.ElementTree import Element, tostring
+from xml.dom import minidom
+
+
+# utilities
+def cookie_processor(cookies_string):
+    return {
+        cookie: value
+        for cookie, value in map(lambda x: x.split('=', 1),
+                                 cookies_string.split("; "))
+    }
+
+
+def header_processor(header_string, cookies_string):
+    headers = {
+        header: value
+        for header, value in map(lambda x: x.split(": "), header_string)
+    }
+
+    cookies = {}
+    if 'cookie' in headers:
+        cookies.update(cookie_processor(headers['cookie']))
+    if 'Cookie' in headers:
+        cookies.update(cookie_processor(headers['Cookie']))
+
+    content_type = None
+    if 'Content-Type' in headers:
+        content_type = headers['Content-Type']
+
+    for key in ('Cookie', 'Host', 'Content-Type'):
+        if key in headers:
+            del headers[key]
+
+    if cookies_string:
+        cookies.update(
+            {k: v
+             for k, v in map(lambda x: x.split("="), cookies_string)})
+
+    return headers, cookies, content_type
+
+
+if __name__ == "__main__":
+    # option parser
+    parser = argparse.ArgumentParser()
+    parser.add_argument('url')
+    parser.add_argument('--compressed', action='store_true')
+    parser.add_argument('-H', '--header', dest='headers', action='append')
+    parser.add_argument('--data', '-d', dest='contents', action='store')
+    parser.add_argument('-b', '--cookie', dest='cookies', action='append')
+    parser.add_argument('-X',
+                        '--request',
+                        dest='method',
+                        action='store',
+                        default='GET')
+    parser.add_argument('--http1.1',
+                        dest='version',
+                        action='store_const',
+                        const='1.1',
+                        default='1.1')
+    parser.add_argument('-0',
+                        '--http1.0',
+                        dest='version',
+                        action='store_const',
+                        const='1.0')
+    parser.add_argument('--content_type', dest='content_type', action='store')
+    args = parser.parse_args()
+    args.headers, args.cookies, args.content_type = header_processor(
+        args.headers, args.cookies)
+
+    # main
+    headers = [Element("http_header",
+                       attrib={"name": key,
+                               "value": value})
+               for key, value in args.headers.iteritems()]
+
+    cookies = [Element("add_cookie",
+                       attrib={"key": key,
+                               "value": value})
+               for key, value in args.cookies.iteritems()]
+
+    http = Element(
+        "http",
+        attrib={
+            attr: getattr(args, attr)
+            for attr in ('url', 'version', 'contents', 'method', 'content_type'
+                         ) if getattr(args, attr) is not None
+        })
+
+    for child in headers + cookies:
+        http.append(child)
+
+    request = Element("request")
+    request.append(http)
+
+    output = minidom.parseString(tostring(request)) \
+                    .toprettyxml(indent="  ") \
+                    .splitlines()[1:]
+
+    print("=" * 80)
+    print("\n".join(output))
+    print("=" * 80)
